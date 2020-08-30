@@ -9,6 +9,11 @@ import Backdrop from "@material-ui/core/Backdrop"
 import { useAuth0 } from "@auth0/auth0-react"
 
 const gameDefs = {
+  "All In": {
+    description:
+      "In All In, all players work towards the completion of a single challenging issue.",
+    duration: 30 * 60 * 1000,
+  },
   Ambush: {
     description:
       "In Ambush, each player selects an issue on the same repository. If a player finishes early, they can help another player complete their issue. To complete an ambush, every player must submit a PR that plausibly fixes an issue. The players lose the Ambush after 30 minutes if they haven't all created PRs.",
