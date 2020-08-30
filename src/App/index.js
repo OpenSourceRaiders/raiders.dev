@@ -20,6 +20,7 @@ import clickSound from "./click.mp3"
 import typingSound from "./typing.mp3"
 import deploySound from "./deploy.mp3"
 import Router from "../Router"
+import { Auth0Provider } from "@auth0/auth0-react"
 
 const mySounds = createSounds({
   shared: { volume: 1 },
@@ -49,7 +50,13 @@ function App() {
     <ThemeProvider theme={createTheme()}>
       <SoundsProvider sounds={createSounds(mySounds)}>
         <AssholeProvider>
-          <Router />
+          <Auth0Provider
+            domain="seveibar.us.auth0.com"
+            clientId="Who7uw1RtiYKS35OIBukkJWTWryB7Ejb"
+            redirectUri={window.location.origin}
+          >
+            <Router />
+          </Auth0Provider>
         </AssholeProvider>
       </SoundsProvider>
     </ThemeProvider>

@@ -23,10 +23,12 @@ const InnerContainer = styled("div")({
   },
 })
 
-export const CenteredContent = ({ children, page }) => {
+export const CenteredContent = ({ children, page, style }) => {
   return (
     <OuterContainer>
-      <InnerContainer className={page ? "page" : ""}>{children}</InnerContainer>
+      <InnerContainer className={page ? "page" : ""} style={style}>
+        {children}
+      </InnerContainer>
     </OuterContainer>
   )
 }

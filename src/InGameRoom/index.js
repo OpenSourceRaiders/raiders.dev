@@ -27,11 +27,11 @@ export const InGameRoom = () => {
     setLoading(false)
   }
   const [showing, setShowing] = useState([
-    // "playerNumber",
-    "camera",
-    "screen",
-    "status",
-    "stream",
+    "playerNumber",
+    // "camera",
+    // "screen",
+    // "status",
+    // "stream",
   ])
   const playerNumberSelected = async (e) => {
     const number = parseInt(e.target.innerHTML)
@@ -40,9 +40,8 @@ export const InGameRoom = () => {
     setShowing(["camera"])
   }
   const inStream = showing.includes("stream")
-  const Container = !showing.includes("stream") ? CenteredContent : "div"
   return (
-    <Container page>
+    <CenteredContent page style={inStream ? { minWidth: 1600 } : {}}>
       <Row>
         <Col s={inStream ? null : 12}>
           {showing.includes("playerNumber") && (
@@ -192,7 +191,7 @@ export const InGameRoom = () => {
           </Col>
         )}
       </Row>
-    </Container>
+    </CenteredContent>
   )
 }
 

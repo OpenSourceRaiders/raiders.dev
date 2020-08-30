@@ -1,16 +1,34 @@
 import React, { useState } from "react"
 import CenteredContent from "../CenteredContent"
+import { styled } from "@material-ui/styles"
 import { Project, Words, Button, Loading, Heading } from "arwes"
 import TextInput from "../TextInput"
+import { useAuth0 } from "@auth0/auth0-react"
+
+const ButtonContainer = styled("div")({
+  position: "absolute",
+  right: 10,
+  bottom: 10,
+  "& > *": {
+    margin: 8,
+  },
+})
 
 export const JoinRoom = ({ show, onNavigate }) => {
   const [roomCode, setRoomCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const [errorText, setErrorText] = useState("")
+  const { user, isAuthenticated } = useAuth0()
   return (
     <CenteredContent page>
-      <Project show={!loading} header="Welcome Raider" animate>
+      <Project
+        show={!loading}
+        header={
+          !isAuthenticated ? "Welcome Raider" : `Welcome ${user.nickname}`
+        }
+        animate
+      >
         <Words animate show={!loading}>
           Enter the room code below to begin.
         </Words>
@@ -32,6 +50,7 @@ export const JoinRoom = ({ show, onNavigate }) => {
               show={roomCode && !loading}
               animate
               disabled={!roomCode}
+              layer="success"
               onClick={async () => {
                 setLoading(true)
                 setLoadingText("Finding Room...")
@@ -58,7 +77,13 @@ export const JoinRoom = ({ show, onNavigate }) => {
           </Heading>
         </div>
       )}
-      <div style={{ position: "absolute", right: 10, bottom: 10 }}>
+      <ButtonContainer>
+        {!isAuthenticated ? (
+          <Button onClick={() => onNavigate("login")}>Login</Button>
+        ) : (
+          <Button onClick={() => onNavigate("logout")}>Logout</Button>
+        )}
+        <Button onClick={() => onNavigate("schedule")}>Schedule</Button>
         <Button
           onClick={() => {
             setLoading(true)
@@ -81,7 +106,7 @@ export const JoinRoom = ({ show, onNavigate }) => {
             ? "I don't like this design"
             : "I actually did like the old design!"}
         </Button>
-      </div>
+      </ButtonContainer>
     </CenteredContent>
   )
 }
