@@ -12,7 +12,10 @@ export const CountTo = ({ to }) => {
       clearInterval(interval)
     }
   })
-  const { months, days, hours, minutes, seconds } = countdown(Date.now(), to)
+  const { months, days, hours, minutes, seconds } = countdown(
+    Date.now(),
+    moment(to).toDate()
+  )
   return (
     <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
       {months === 0 ? "    " : months.toString().padStart(2, " ") + "mo "}

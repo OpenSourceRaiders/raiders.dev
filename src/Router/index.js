@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import JoinRoom from "../JoinRoom"
 import InGameRoom from "../InGameRoom"
 import SchedulePage from "../SchedulePage"
@@ -8,7 +8,7 @@ import { useAuth0 } from "@auth0/auth0-react"
 import { Arwes } from "arwes"
 
 export const Router = () => {
-  const [route, setRoute] = useState("join")
+  const [route, setRoute] = useState("schedule")
   const [loading, setLoading] = useState(false)
   const { loginWithRedirect, logout } = useAuth0()
 

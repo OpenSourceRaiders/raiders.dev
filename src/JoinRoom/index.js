@@ -6,7 +6,7 @@ import TextInput from "../TextInput"
 import { useAuth0 } from "@auth0/auth0-react"
 
 const ButtonContainer = styled("div")({
-  position: "absolute",
+  position: "fixed",
   right: 10,
   bottom: 10,
   "& > *": {

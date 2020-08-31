@@ -11,11 +11,16 @@
     "@testing-library/user-event": "^7.1.2",
     "arwes": "^1.0.0-alpha.5",
     "countdown": "^2.6.0",
+    "micro": "^9.3.4",
+    "micro-query": "^0.3.0",
     "moment": "^2.27.0",
+    "pgknexlove": "^1.0.6",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3",
-    "react-twitch-embed-video": "^2.0.4"
+    "react-twitch-embed-video": "^2.0.4",
+    "recoil": "^0.0.10",
+    "use-event-callback": "^0.1.0"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -7,6 +7,7 @@ import moment from "moment"
 import CountTo from "../CountTo"
 import Backdrop from "@material-ui/core/Backdrop"
 import { useAuth0 } from "@auth0/auth0-react"
+import { useSessionListPolling } from "../hooks/use-session.js"
 
 const gameDefs = {
   "All In": {
@@ -31,7 +32,7 @@ const TableItem = styled("div")({
 })
 
 const ButtonContainer = styled("div")({
-  position: "absolute",
+  position: "fixed",
   right: 10,
   bottom: 10,
   "& > *": {
@@ -42,107 +43,127 @@ const ButtonContainer = styled("div")({
 export const SchedulePage = ({ onNavigate }) => {
   const [infoDialog, setInfoDialog] = useState({ open: false })
   const { user, isAuthenticated } = useAuth0()
-  const sessions = [
-    {
-      startsAt: moment().add(48, "minutes"),
-      theme: "NPM Packages",
-      slotsTotal: 3,
-      slotsFilled: 1,
-      games: [
-        {
-          gameName: "Ambush",
-          repo: "https://github.com/UniversalDataTool/universal-data-tool",
-        },
-        {
-          gameName: "Help Wanted",
-          times: 2,
-        },
-      ],
-    },
-    {
-      startsAt: moment().add(3495, "minutes"),
-      theme: "Elixir",
-      slotsTotal: 3,
-      slotsFilled: 2,
-      playerIn: true,
-      games: [
-        {
-          gameName: "Ambush",
-          repo: "https://github.com/UniversalDataTool/universal-data-tool",
-        },
-        {
-          gameName: "Help Wanted",
-          times: 2,
-        },
-      ],
-    },
-    {
-      startsAt: moment().add(39, "hours").add(21, "minutes"),
-      theme: "PIP Packages",
-      slotsTotal: 3,
-      slotsFilled: 3,
-      games: [
-        {
-          gameName: "Ambush",
-          repo: "https://github.com/UniversalDataTool/universal-data-tool",
-        },
-        {
-          gameName: "Help Wanted",
-          times: 2,
-        },
-      ],
-    },
-  ]
+  const sessions = useSessionListPolling()
 
   return (
     <CenteredContent page>
-      <Project animate header="Schedule" show={!infoDialog.open}>
+      <Project
+        animate
+        header="Schedule"
+        show={!infoDialog.open && Boolean(sessions)}
+      >
         <Table
-          show={!infoDialog.open}
+          show={!infoDialog.open && Boolean(sessions)}
           animate
           headers={["Starts In", "Date", "Time", "Theme", "Games", ""]}
-          dataset={sessions.map((session) =>
+          dataset={(sessions || []).map((session) =>
             [
-              <CountTo to={session.startsAt} />,
-              moment(session.startsAt).format("ddd MMM Do"),
-              moment(session.startsAt).format("LT"),
+              <CountTo to={session.start_time} />,
+              moment(session.start_time).format("ddd MMM Do"),
+              moment(session.start_time).format("LT"),
               session.theme,
               <div>
-                {session.games.map((game, i) => (
-                  <Link
-                    style={{ display: "block" }}
-                    onClick={() => {
-                      setInfoDialog({
-                        title: game.gameName,
-                        content:
-                          gameDefs[game.gameName].description +
-                          "\n\n" +
-                          (game.repo
-                            ? `The repo selected for this session is: ${game.repo}`
-                            : ""),
-                        open: true,
-                      })
-                    }}
-                  >
-                    {moment(gameDefs[game.gameName].duration).minutes() *
-                      (game.times || 1)}
-                    m {game.gameName}{" "}
-                    {game.times && game.times !== 1 ? `(${game.times}x)` : ""}
-                  </Link>
-                ))}
+                {session.plan.map((game, i) =>
+                  game.gameName ? (
+                    <Link
+                      style={{ display: "block" }}
+                      onClick={() => {
+                        setInfoDialog({
+                          title: game.gameName,
+                          content:
+                            gameDefs[game.gameName].description +
+                            "\n\n" +
+                            (game.repo
+                              ? `The repo selected for this session is: ${game.repo}`
+                              : ""),
+                          open: true,
+                        })
+                      }}
+                    >
+                      {moment(gameDefs[game.gameName].duration).minutes() *
+                        (game.times || 1)}
+                      m {game.gameName}{" "}
+                      {game.times && game.times !== 1 ? `(${game.times}x)` : ""}
+                    </Link>
+                  ) : (
+                    <div>
+                      {moment(game.duration).minutes()}m {game.name}
+                    </div>
+                  )
+                )}
               </div>,
               <div style={{ margin: 8, textAlign: "center" }}>
-                {session.playerIn ? (
-                  <Button layer="success">
-                    Joined ({session.slotsFilled}/{session.slotsTotal})
+                {user && session.players.includes(user.nickname) ? (
+                  <Button
+                    onClick={async () => {
+                      setInfoDialog({
+                        open: true,
+                        title: "Raid Left",
+                        content: `You have left the raid and your comrades. Your cowardice is beyond redemption.`,
+                        layer: "alert",
+                      })
+                      await fetch(
+                        `/api/session?session_id=${session.session_id}`,
+                        {
+                          method: "PUT",
+                          body: JSON.stringify({
+                            session: {
+                              players: session.players.filter(
+                                (p) => p !== user.nickname
+                              ),
+                            },
+                          }),
+                          headers: { "Content-Type": "application/json" },
+                        }
+                      )
+                    }}
+                    layer="success"
+                  >
+                    Joined ({session.players.length}/{session.players_allowed})
                   </Button>
-                ) : session.slotsFilled < session.slotsTotal ? (
-                  <Button>
-                    Join ({session.slotsFilled}/{session.slotsTotal})
+                ) : session.players.length < session.players_allowed ? (
+                  <Button
+                    onClick={async () => {
+                      if (!isAuthenticated) {
+                        setInfoDialog({
+                          open: true,
+                          title: "Not Logged In",
+                          content: "You must be logged in to join a raid.",
+                          layer: "alert",
+                        })
+                      } else {
+                        setInfoDialog({
+                          open: true,
+                          title: "Raid Joined",
+                          content: `You have joined a raid. You'll be playing with [${session.players.join(
+                            ","
+                          )}]. You'll receive a room code via email or via a message from the host (${
+                            session.host
+                          }).`,
+                        })
+                        await fetch(
+                          `/api/session?session_id=${session.session_id}`,
+                          {
+                            method: "PUT",
+                            body: JSON.stringify({
+                              session: {
+                                players: session.players.concat([
+                                  user.nickname,
+                                ]),
+                              },
+                            }),
+                            headers: { "Content-Type": "application/json" },
+                          }
+                        )
+                        await sessions.update()
+                      }
+                    }}
+                  >
+                    Join ({session.players.length}/{session.players_allowed})
                   </Button>
                 ) : (
                   <Button disabled>
-                    Full ({session.slotsTotal}/{session.slotsTotal})
+                    Full ({session.players.length}/{session.players_allowed})
                   </Button>
                 )}
               </div>,
@@ -156,7 +177,12 @@ export const SchedulePage = ({ onNavigate }) => {
         style={{ zIndex: 100 }}
       >
         <CenteredContent page>
-          <Project header={infoDialog.title} animate show>
+          <Project
+            header={infoDialog.title}
+            animate
+            show
+            style={{ maxWidth: "50%" }}
+          >
             <Words style={{ whiteSpace: "pre-wrap" }} animate show>
               {infoDialog.content}
             </Words>

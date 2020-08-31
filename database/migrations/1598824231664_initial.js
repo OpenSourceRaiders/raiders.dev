@@ -1,11 +1,12 @@
 /* eslint-disable camelcase */
+const { PgLiteral } = require("node-pg-migrate")
 
-exports.shorthands = (pgm) => ({
+exports.shorthands = {
   id: {
     type: "uuid",
     primaryKey: true,
     notNull: true,
-    default: pgm.func("gen_random_uuid"),
+    default: PgLiteral.create("gen_random_uuid()"),
   },
   serialid: {
     type: "serial",
@@ -14,9 +15,9 @@ exports.shorthands = (pgm) => ({
   created_or_modified_at: {
     type: "timestamptz",
     notNull: true,
-    default: pgm.func("current_timestamp"),
+    default: PgLiteral.create("current_timestamp"),
   },
-})
+}
 
 exports.up = (pgm) => {
   pgm.createExtension("pgcrypto")
@@ -49,16 +50,23 @@ exports.up = (pgm) => {
       type: "text",
       notNull: true,
       unique: true,
-      default: pgm.sql("md5(random()::text)"),
+      default: new PgLiteral("md5(random()::text)"),
     },
-    stream1_camera_url: { type: "text" },
-    stream2_camera_url: { type: "text" },
-    stream3_camera_url: { type: "text" },
-    stream4_camera_url: { type: "text" },
-    stream1_screen_url: { type: "text" },
-    stream2_screen_url: { type: "text" },
-    stream3_screen_url: { type: "text" },
-    stream4_screen_url: { type: "text" },
+    host: { type: "text" },
+
+    player1_active: { type: "boolean", notNull: true, default: false },
+    player2_active: { type: "boolean", notNull: true, default: false },
+    player3_active: { type: "boolean", notNull: true, default: false },
+    player4_active: { type: "boolean", notNull: true, default: false },
+
+    // stream1_camera_url: { type: "text" },
+    // stream2_camera_url: { type: "text" },
+    // stream3_camera_url: { type: "text" },
+    // stream4_camera_url: { type: "text" },
+    // stream1_screen_url: { type: "text" },
+    // stream2_screen_url: { type: "text" },
+    // stream3_screen_url: { type: "text" },
+    // stream4_screen_url: { type: "text" },
 
     // admin-published information about session, e.g. when each player will have
     // spotlight

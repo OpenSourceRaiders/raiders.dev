@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { RecoilRoot } from "recoil"
 import { styled } from "@material-ui/styles"
 import {
   ThemeProvider,
@@ -55,7 +56,9 @@ function App() {
             clientId="Who7uw1RtiYKS35OIBukkJWTWryB7Ejb"
             redirectUri={window.location.origin}
           >
-            <Router />
+            <RecoilRoot>
+              <Router />
+            </RecoilRoot>
           </Auth0Provider>
         </AssholeProvider>
       </SoundsProvider>
