@@ -31,7 +31,7 @@ export type Command =
   | {| type: "TIME", timeRemaining: number |}
   | {| type: "COUNTDOWN", from: number |}
   | {| type: "SAY", text: string, times?: number |}
-  | {| type: "START_GAME", gameName: string |}
+  | {| type: "GO_TO_PLAN", index: number |}
   | {| type: "SPOTLIGHT", player: number, until?: number |}
   | {| type: "PLAYER_ACTIVE", player: number |}
   | {| type: "KICK_PLAYER", player: number |}
@@ -54,7 +54,7 @@ const loadPlanItem = (planItem) => {
   } else if (planItem.gameName) {
     const dets = gameDefs[planItem.gameName]
     return {
-      currentTime: planItem.gameName,
+      currentTitle: planItem.gameName,
       inGame: true,
       timeRemaining: Math.floor(dets.duration / 1000),
     }
@@ -108,6 +108,13 @@ export default ({
         })
       }
       return { ...state, timeRemaining }
+    }
+    case "GO_TO_PLAN": {
+      return {
+        ...state,
+        ...loadPlanItem(plan[command.index]),
+        planIndex: plan[command.index],
+      }
     }
     case "SPOTLIGHT": {
       return {

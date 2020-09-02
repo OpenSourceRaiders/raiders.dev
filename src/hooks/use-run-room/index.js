@@ -2,6 +2,18 @@ import { useRef, useEffect } from "react"
 import runGame from "./state-machine.js"
 import speech from "../../speech"
 
+function executeSpeech(command) {
+  if (command.type === "SAY") {
+    speech.speak({ text: command.text })
+  } else if (command.type === "COUNTDOWN") {
+    for (let i = Math.min(10, command.from); i > 0; i--) {
+      setTimeout(() => {
+        speech.speak({ text: i.toString() })
+      }, 1000 + (command.from - i) * 1000)
+    }
+  }
+}
+
 export default (session, host) => {
   const alreadyRunCommands = useRef(new Set())
   const commandsToRun = useRef([])
@@ -19,18 +31,10 @@ export default (session, host) => {
       if (!command.id) continue
       if (!alreadyRunCommands.current.has(command.id)) {
         alreadyRunCommands.current.add(command.id)
-        commandsToRun.current.push(command)
 
-        if (Date.now() - listenStartTime.current > 5000) {
-          if (command.type === "SAY") {
-            speech.speak({ text: command.text })
-          } else if (command.type === "COUNTDOWN") {
-            for (let i = Math.min(10, command.from); i > 0; i--) {
-              setTimeout(() => {
-                speech.speak({ text: i.toString() })
-              }, 1000 + (command.from - i) * 1000)
-            }
-          }
+        if (Date.now() - listenStartTime.current > 3000) {
+          commandsToRun.current.push(command)
+          executeSpeech(command)
         }
       }
     }
@@ -45,6 +49,7 @@ export default (session, host) => {
       const dispatch = (cmd) => {
         const id = Math.random().toString(36).slice(-10)
         alreadyRunCommands.current.add(id)
+        executeSpeech(cmd)
         fetch(`/api/command`, {
           method: "POST",
           body: JSON.stringify({
@@ -63,10 +68,12 @@ export default (session, host) => {
           dispatch,
         })
       }
-      commandsToRun.current.push({
-        type: "TIME",
-        timeRemaining: gameState.current.timeRemaining - 1,
-      })
+      if (!commandsToRun.current.some((c) => c.type === "TIME")) {
+        commandsToRun.current.unshift({
+          type: "TIME",
+          timeRemaining: gameState.current.timeRemaining - 1,
+        })
+      }
       for (let i = 0; i < commandsToRun.current.length && i < 20; i++) {
         gameState.current = runGame({
           command: commandsToRun.current[i],

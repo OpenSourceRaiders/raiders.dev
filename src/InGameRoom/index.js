@@ -184,10 +184,36 @@ export const InGameRoom = ({ session_id }) => {
                       Current Game: {session?.state_info?.currentTitle} {"(+"}
                       {toMinSecs(session?.state_info?.timeRemaining)})
                     </Heading>
-                    <Heading>Screen is on: seve</Heading>
-                    <Heading>Screen on you in: {timeUntilScreenOnYou}</Heading>
+                    <Heading>
+                      Spotlight:{" "}
+                      {
+                        (session?.players || [])[
+                          session?.state_info?.spotlight?.player
+                        ]
+                      }
+                    </Heading>
                     <Spacing>
-                      <Button>Steal Screen</Button>
+                      <Button
+                        onClick={() => {
+                          const id = Math.random().toString(36).slice(-8)
+                          fetch(`/api/command`, {
+                            method: "POST",
+                            body: JSON.stringify({
+                              command: {
+                                type: "SPOTLIGHT",
+                                player: playerNumber || 0,
+                                until: session?.state_info?.timeRemaining - 60,
+                                id,
+                              },
+                              session_id,
+                              player_number: playerNumber || 0,
+                            }),
+                            headers: { "Content-Type": "application/json" },
+                          })
+                        }}
+                      >
+                        Steal Screen
+                      </Button>
                       <Button>Leave</Button>
                     </Spacing>
                   </Grid>
@@ -226,9 +252,6 @@ export const InGameRoom = ({ session_id }) => {
                   show={!loading}
                 >
                   <Spacing>
-                    <Button>Start Deep Dive</Button>
-                    <Button>Start Quick Find</Button>
-                    <Button>Start Help Wanted</Button>
                     <Button>Kick 1</Button>
                     <Button>Kick 2</Button>
                     <Button>Kick 3</Button>
