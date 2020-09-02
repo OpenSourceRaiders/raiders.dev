@@ -53,8 +53,8 @@ export const InGameRoom = ({ session_id }) => {
   const inStream = showing.includes("stream")
   return (
     <CenteredContent page>
-      <Row>
-        <Col s={!inStream ? 12 : 9}>
+      <Grid container>
+        <Grid xs={!inStream ? 12 : 7}>
           {!showing.includes("playerNumber") && (
             <Project
               style={{ marginTop: 32, width: !inStream ? 450 : undefined }}
@@ -70,7 +70,7 @@ export const InGameRoom = ({ session_id }) => {
               )}
               <IFrame
                 src="https://obs.ninja/?room=lamebear_cam&webcam"
-                width={!inStream ? 400 : 700}
+                width={!inStream ? 400 : 600}
                 allow="camera;microphone"
                 title="camera"
                 className={
@@ -98,8 +98,8 @@ export const InGameRoom = ({ session_id }) => {
               )}
             </Project>
           )}
-        </Col>
-        <Col s={!inStream ? 12 : 3}>
+        </Grid>
+        <Grid item xs={!inStream ? 12 : 5}>
           {showing.includes("playerNumber") && (
             <Project show={!loading} animate header="Select Your Player">
               {!loading && (
@@ -121,148 +121,152 @@ export const InGameRoom = ({ session_id }) => {
             </Project>
           )}
           <div style={{ marginTop: 32 }} />
-          {showing.includes("screen") && (
-            <Project
-              show={!loading}
-              animate
-              header="Share Desktop"
-              style={{
-                display: "inline-flex",
-                width: 450,
-                flexDirection: "column",
-              }}
-            >
-              {!showing.includes("stream")
-                ? !loading && (
-                    <div animate show={!loading}>
-                      Don't share audio. Try to use an external or{" "}
-                      <Link href="https://askubuntu.com/a/998435">
-                        virtual monitor
-                      </Link>{" "}
-                      with 720p resolution. This is better than switching
-                      between applications. Make sure your text is BIG in your
-                      terminal and editor. Mute yourself by hitting the mic (to
-                      save bandwidth) in this window.
-                    </div>
-                  )
-                : null}
-              <div style={{ marginTop: 16 }}>
-                <IFrame
-                  src="https://obs.ninja/?room=lamebear_screen&view&screenshare&noaudio&novideo"
-                  width="400"
-                  className={loading ? "loading" : ""}
-                  height={320}
-                ></IFrame>
-              </div>
-              {!inStream && (
-                <div style={{ textAlign: "right" }}>
-                  <Button
-                    onClick={async () => {
-                      await fakeLoad()
-                      setShowing(["status", "stream", "camera", "screen"])
-                    }}
-                  >
-                    Desktop Added
-                  </Button>
-                </div>
-              )}
-            </Project>
-          )}
-        </Col>
-        {inStream && (
-          <>
-            <Col s={12}>
+          <div style={{ textAlign: "center" }}>
+            {showing.includes("screen") && (
               <Project
-                style={{ marginTop: 32 }}
-                header="Status"
-                animate
                 show={!loading}
+                animate
+                header="Share Desktop"
+                style={{
+                  display: "inline-flex",
+                  flexDirection: "column",
+                }}
               >
-                <Grid container>
-                  <Grid item xs={8}>
-                    <Heading>
-                      Current Game: {session?.state_info?.currentTitle} {"(+"}
-                      {toMinSecs(session?.state_info?.timeRemaining)})
-                    </Heading>
-                    <Heading>
-                      Spotlight:{" "}
-                      {
-                        (session?.players || [])[
-                          session?.state_info?.spotlight?.player
-                        ]
-                      }
-                    </Heading>
-                    <Spacing>
-                      <Button
-                        onClick={() => {
+                {!showing.includes("stream")
+                  ? !loading && (
+                      <div animate show={!loading}>
+                        Don't share audio. Try to use an external or{" "}
+                        <Link href="https://askubuntu.com/a/998435">
+                          virtual monitor
+                        </Link>{" "}
+                        with 720p resolution. This is better than switching
+                        between applications. Make sure your text is BIG in your
+                        terminal and editor. Mute yourself by hitting the mic
+                        (to save bandwidth) in this window.
+                      </div>
+                    )
+                  : null}
+                <div style={{ marginTop: 16 }}>
+                  <IFrame
+                    src="https://obs.ninja/?room=lamebear_screen&view&screenshare&noaudio&novideo"
+                    width="300"
+                    className={loading ? "loading" : ""}
+                    height={240}
+                  ></IFrame>
+                </div>
+                {!inStream && (
+                  <div style={{ textAlign: "right" }}>
+                    <Button
+                      onClick={async () => {
+                        await fakeLoad()
+                        setShowing(["status", "stream", "camera", "screen"])
+                      }}
+                    >
+                      Desktop Added
+                    </Button>
+                  </div>
+                )}
+              </Project>
+            )}
+          </div>
+        </Grid>
+        <Grid xs={12}>
+          {inStream && (
+            <>
+              <Col s={12}>
+                <Project
+                  style={{ marginTop: 32 }}
+                  header="Status"
+                  animate
+                  show={!loading}
+                >
+                  <Grid container>
+                    <Grid item xs={8}>
+                      <Heading>
+                        Current Game: {session?.state_info?.currentTitle} {"(+"}
+                        {toMinSecs(session?.state_info?.timeRemaining)})
+                      </Heading>
+                      <Heading>
+                        Spotlight:{" "}
+                        {
+                          (session?.players || [])[
+                            session?.state_info?.spotlight?.player
+                          ]
+                        }
+                      </Heading>
+                      <Spacing>
+                        <Button
+                          onClick={() => {
+                            const id = Math.random().toString(36).slice(-8)
+                            fetch(`/api/command`, {
+                              method: "POST",
+                              body: JSON.stringify({
+                                command: {
+                                  type: "SPOTLIGHT",
+                                  player: playerNumber || 0,
+                                  until:
+                                    session?.state_info?.timeRemaining - 60,
+                                  id,
+                                },
+                                session_id,
+                                player_number: playerNumber || 0,
+                              }),
+                              headers: { "Content-Type": "application/json" },
+                            })
+                          }}
+                        >
+                          Steal Spotlight
+                        </Button>
+                        <Button>Leave</Button>
+                      </Spacing>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <CommandTerminal
+                        commands={session ? session.recentCommands : []}
+                        onSubmit={(cmd) => {
                           const id = Math.random().toString(36).slice(-8)
                           fetch(`/api/command`, {
                             method: "POST",
                             body: JSON.stringify({
-                              command: {
-                                type: "SPOTLIGHT",
-                                player: playerNumber || 0,
-                                until: session?.state_info?.timeRemaining - 60,
-                                id,
-                              },
+                              command: { ...cmd, id },
                               session_id,
                               player_number: playerNumber || 0,
                             }),
                             headers: { "Content-Type": "application/json" },
                           })
                         }}
-                      >
-                        Steal Screen
-                      </Button>
-                      <Button>Leave</Button>
-                    </Spacing>
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid item xs={4}>
-                    <CommandTerminal
-                      commands={session ? session.recentCommands : []}
-                      onSubmit={(cmd) => {
-                        const id = Math.random().toString(36).slice(-8)
-                        fetch(`/api/command`, {
-                          method: "POST",
-                          body: JSON.stringify({
-                            command: { ...cmd, id },
-                            session_id,
-                            player_number: playerNumber || 0,
-                          }),
-                          headers: { "Content-Type": "application/json" },
-                        })
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              </Project>
-              <Project
-                style={{ marginTop: 32 }}
-                header="Stream"
-                animate
-                show={!loading}
-              >
-                <ReactTwitchEmbedVideo channel="opensourceraiders" />
-              </Project>
-              {window.localStorage.is_admin && (
+                </Project>
                 <Project
                   style={{ marginTop: 32 }}
-                  header="Admin"
+                  header="Stream"
                   animate
                   show={!loading}
                 >
-                  <Spacing>
-                    <Button>Kick 1</Button>
-                    <Button>Kick 2</Button>
-                    <Button>Kick 3</Button>
-                    <Button>Kick 4</Button>
-                  </Spacing>
+                  <ReactTwitchEmbedVideo channel="opensourceraiders" />
                 </Project>
-              )}
-            </Col>
-          </>
-        )}
-      </Row>
+                {window.localStorage.is_admin && (
+                  <Project
+                    style={{ marginTop: 32 }}
+                    header="Admin"
+                    animate
+                    show={!loading}
+                  >
+                    <Spacing>
+                      <Button>Kick 1</Button>
+                      <Button>Kick 2</Button>
+                      <Button>Kick 3</Button>
+                      <Button>Kick 4</Button>
+                    </Spacing>
+                  </Project>
+                )}
+              </Col>
+            </>
+          )}
+        </Grid>
+      </Grid>
     </CenteredContent>
   )
 }

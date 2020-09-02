@@ -91,7 +91,9 @@ export default ({
       } else if (timeRemaining === 120 && state.inGame) {
         dispatch({ type: "SAY", text: "Two Minutes Remaining" })
       } else if (timeRemaining === 60 * 5 && state.inGame) {
-        dispatch({ type: "SAY", text: "5 Minutes Remaining" })
+        dispatch({ type: "SAY", text: "Five Minutes Remaining" })
+      } else if (timeRemaining === 60 * 10 && state.inGame) {
+        dispatch({ type: "SAY", text: "Ten Minutes Remaining" })
       }
 
       if (timeRemaining <= state.spotlight.until) {
