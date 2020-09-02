@@ -3,6 +3,12 @@ import { styled } from "@material-ui/styles"
 import { Project, Words, Button, Loading, Heading, Link, Row, Col } from "arwes"
 import CenteredContent from "../CenteredContent"
 import ReactTwitchEmbedVideo from "react-twitch-embed-video"
+import useSessionPolling from "../hooks/use-session-polling"
+import Grid from "@material-ui/core/Grid"
+import TextInput from "../TextInput"
+import CommandTerminal from "../CommandTerminal"
+import useRunRoom from "../hooks/use-run-room"
+import speech from "../speech"
 
 const IFrame = styled("iframe")({
   border: "none",
@@ -12,38 +18,88 @@ const IFrame = styled("iframe")({
   },
 })
 const Spacing = styled("div")({ "& > *": { margin: 8 } })
+const toMinSecs = (n) => {
+  const minutes = Math.floor(n / 60)
+  const seconds = n % 60
+  return `${minutes.toString()}:${seconds.toString().padStart(2, "0")}`
+}
 
-export const InGameRoom = () => {
+export const InGameRoom = ({ session_id }) => {
   const [loading, setLoading] = useState(false)
-  const [bigCamera, setBigCamera] = useState(true)
-  const [bigScreen, setBigScreen] = useState(true)
-  const [currentGame, setCurrentGame] = useState("Deep Dive")
-  const [timeRemaining, setTimeRemaining] = useState("15:03")
+  const [bigCamera, setBigCamera] = useState(false)
   const [timeUntilScreenOnYou, setTimeUntilScreenOnYou] = useState("1:43")
   const [playerNumber, setPlayerNumber] = useState(null)
+  const [session, changeSession] = useSessionPolling(session_id)
+  useRunRoom(session)
   const fakeLoad = async () => {
     setLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 500))
     setLoading(false)
   }
   const [showing, setShowing] = useState([
-    "playerNumber",
-    // "camera",
-    // "screen",
-    // "status",
-    // "stream",
+    // "playerNumber",
+    "camera",
+    "screen",
+    "status",
+    "stream",
   ])
   const playerNumberSelected = async (e) => {
     const number = parseInt(e.target.innerHTML)
     setPlayerNumber(number)
+    speech.speak({ text: "Welcome... Raider " + number })
     await fakeLoad()
     setShowing(["camera"])
   }
   const inStream = showing.includes("stream")
   return (
-    <CenteredContent page style={inStream ? { minWidth: 1600 } : {}}>
+    <CenteredContent page>
       <Row>
-        <Col s={inStream ? null : 12}>
+        <Col s={!inStream ? 12 : 9}>
+          {!showing.includes("playerNumber") && (
+            <Project
+              style={{ marginTop: 32, width: !inStream ? 450 : undefined }}
+              show={!loading && showing.includes("camera")}
+              animate
+              header="Add Camera and Join Chat"
+            >
+              {showing.includes("camera") && !inStream && (
+                <Words animate show={!loading}>
+                  You'll be able to talk to other people in the stream after you
+                  connect.
+                </Words>
+              )}
+              <IFrame
+                src="https://obs.ninja/?room=lamebear_cam&webcam"
+                width={!inStream ? 400 : 700}
+                allow="camera;microphone"
+                title="camera"
+                className={
+                  loading || !showing.includes("camera") ? "loading" : ""
+                }
+                height={bigCamera ? 400 : 240}
+              ></IFrame>
+              {showing.includes("camera") && (
+                <div style={{ textAlign: "right" }}>
+                  {showing.includes("screen") && (
+                    <Button onClick={() => setBigCamera(!bigCamera)}>
+                      {bigCamera ? "Make Smaller" : "Make Bigger"}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={async () => {
+                      await fakeLoad()
+                      setShowing(["screen"])
+                      setBigCamera(false)
+                    }}
+                  >
+                    Camera Added
+                  </Button>
+                </div>
+              )}
+            </Project>
+          )}
+        </Col>
+        <Col s={!inStream ? 12 : 3}>
           {showing.includes("playerNumber") && (
             <Project show={!loading} animate header="Select Your Player">
               {!loading && (
@@ -64,131 +120,124 @@ export const InGameRoom = () => {
               )}
             </Project>
           )}
-          {showing.includes("camera") && (
-            <Project
-              style={{ marginTop: 32 }}
-              show={!loading}
-              animate
-              header="Add Camera and Join Chat"
-            >
-              <IFrame
-                src="https://obs.ninja/?room=lamebear&webcam&novideo"
-                width="400"
-                allow="camera;microphone"
-                title="camera"
-                className={loading ? "loading" : ""}
-                height={bigCamera ? 300 : 50}
-              ></IFrame>
-              <div style={{ textAlign: "right" }}>
-                {showing.includes("screen") && (
-                  <Button onClick={() => setBigCamera(true)}>
-                    Make Bigger
-                  </Button>
-                )}
-                <Button
-                  onClick={async () => {
-                    await fakeLoad()
-                    setShowing(showing.concat(["screen"]))
-                    setBigCamera(false)
-                  }}
-                >
-                  Camera Added
-                </Button>
-              </div>
-            </Project>
-          )}
           <div style={{ marginTop: 32 }} />
           {showing.includes("screen") && (
             <Project
               show={!loading}
               animate
               header="Share Desktop"
-              style={{ display: "flex", flexDirection: "column" }}
+              style={{
+                display: "inline-flex",
+                width: 450,
+                flexDirection: "column",
+              }}
             >
               {!showing.includes("stream")
                 ? !loading && (
-                    <div animate show={!loading} style={{ maxWidth: 400 }}>
+                    <div animate show={!loading}>
                       Don't share audio. Try to use an external or{" "}
                       <Link href="https://askubuntu.com/a/998435">
                         virtual monitor
                       </Link>{" "}
                       with 720p resolution. This is better than switching
                       between applications. Make sure your text is BIG in your
-                      terminal and editor.
+                      terminal and editor. Mute yourself by hitting the mic (to
+                      save bandwidth) in this window.
                     </div>
                   )
-                : !loading && (
-                    <div style={{ maxWidth: 400 }}>
-                      You can change your application source by hitting the gear
-                      icon below, then "Share Screen".
-                    </div>
-                  )}
+                : null}
               <div style={{ marginTop: 16 }}>
                 <IFrame
-                  src="https://obs.ninja/?room=lamebear&view&screenshare&noaudio&novideo"
+                  src="https://obs.ninja/?room=lamebear_screen&view&screenshare&noaudio&novideo"
                   width="400"
                   className={loading ? "loading" : ""}
-                  height={bigScreen ? 400 : 100}
+                  height={320}
                 ></IFrame>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <Button
-                  onClick={async () => {
-                    await fakeLoad()
-                    setShowing(showing.concat(["status", "stream"]))
-                  }}
-                >
-                  Desktop Added
-                </Button>
-              </div>
+              {!inStream && (
+                <div style={{ textAlign: "right" }}>
+                  <Button
+                    onClick={async () => {
+                      await fakeLoad()
+                      setShowing(["status", "stream", "camera", "screen"])
+                    }}
+                  >
+                    Desktop Added
+                  </Button>
+                </div>
+              )}
             </Project>
           )}
         </Col>
         {inStream && (
-          <Col>
-            <Project
-              style={{ marginTop: 32 }}
-              header="Status"
-              animate
-              show={!loading}
-            >
-              <Heading>
-                Current Game: {currentGame} (+{timeRemaining})
-              </Heading>
-              <Heading>Screen is on: seve</Heading>
-              <Heading>Screen on you in: {timeUntilScreenOnYou}</Heading>
-              <Spacing>
-                <Button>Steal Screen</Button>
-                <Button>Leave</Button>
-              </Spacing>
-            </Project>
-            <Project
-              style={{ marginTop: 32 }}
-              header="Stream"
-              animate
-              show={!loading}
-            >
-              <ReactTwitchEmbedVideo channel="opensourceraiders" />
-            </Project>
-            {window.localStorage.is_admin && (
+          <>
+            <Col s={12}>
               <Project
                 style={{ marginTop: 32 }}
-                header="Admin"
+                header="Status"
                 animate
                 show={!loading}
               >
-                <Spacing>
-                  <Button>Start Deep Dive</Button>
-                  <Button>Start Quick Find</Button>
-                  <Button>Start Help Wanted</Button>
-                  <Button>Kick 1</Button>
-                  <Button>Kick 2</Button>
-                  <Button>Kick 3</Button>
-                  <Button>Kick 4</Button>
-                </Spacing>
+                <Grid container>
+                  <Grid item xs={8}>
+                    <Heading>
+                      Current Game: {session?.state_info?.currentTitle} {"(+"}
+                      {toMinSecs(session?.state_info?.timeRemaining)})
+                    </Heading>
+                    <Heading>Screen is on: seve</Heading>
+                    <Heading>Screen on you in: {timeUntilScreenOnYou}</Heading>
+                    <Spacing>
+                      <Button>Steal Screen</Button>
+                      <Button>Leave</Button>
+                    </Spacing>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <CommandTerminal
+                      commands={session ? session.recentCommands : []}
+                      onSubmit={(cmd) => {
+                        const id = Math.random().toString(36).slice(-8)
+                        fetch(`/api/command`, {
+                          method: "POST",
+                          body: JSON.stringify({
+                            command: { ...cmd, id },
+                            session_id,
+                            player_number: playerNumber || 0,
+                          }),
+                          headers: { "Content-Type": "application/json" },
+                        })
+                      }}
+                    />
+                  </Grid>
+                </Grid>
               </Project>
-            )}
-          </Col>
+              <Project
+                style={{ marginTop: 32 }}
+                header="Stream"
+                animate
+                show={!loading}
+              >
+                <ReactTwitchEmbedVideo channel="opensourceraiders" />
+              </Project>
+              {window.localStorage.is_admin && (
+                <Project
+                  style={{ marginTop: 32 }}
+                  header="Admin"
+                  animate
+                  show={!loading}
+                >
+                  <Spacing>
+                    <Button>Start Deep Dive</Button>
+                    <Button>Start Quick Find</Button>
+                    <Button>Start Help Wanted</Button>
+                    <Button>Kick 1</Button>
+                    <Button>Kick 2</Button>
+                    <Button>Kick 3</Button>
+                    <Button>Kick 4</Button>
+                  </Spacing>
+                </Project>
+              )}
+            </Col>
+          </>
         )}
       </Row>
     </CenteredContent>

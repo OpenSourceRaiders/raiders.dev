@@ -1,4 +1,7 @@
-const getDB = require("pgknexlove")({ defaults: { database: "raiders" } })
+const getDB = require("pgknexlove")({
+  defaults: { database: "raiders" },
+  pool: { min: 0, max: 1 },
+})
 const { send, json } = require("micro")
 const query = require("micro-query")
 
@@ -35,9 +38,7 @@ module.exports = async (req, res) => {
       res,
       200,
       await db("session")
-        .where({
-          session_id,
-        })
+        .where({ session_id })
         .select([
           "session_id",
           "session_num",
@@ -52,7 +53,28 @@ module.exports = async (req, res) => {
           "player3_active",
           "player4_active",
           "start_time",
-          "overlay",
+          db.raw(`
+            (
+              SELECT COALESCE(
+                (
+                  SELECT jsonb_agg(obj) FROM (
+                      SELECT                 jsonb_build_object(
+                        'session_command_id', session_command_id,
+                        'issued_by', issued_by,
+                        'command', command,
+                        'created_at', session_command.created_at
+                      ) as obj,
+                      created_at
+                    FROM session_command
+                    WHERE session_command.session_id=session.session_id
+                    ORDER BY session_command.created_at DESC
+                    LIMIT 30
+                  ) jsonb_commands
+                ),
+                '[]'::jsonb
+              )
+            ) as "recentCommands"
+          `),
         ])
         .first()
     )

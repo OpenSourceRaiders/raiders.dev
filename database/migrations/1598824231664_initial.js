@@ -73,11 +73,6 @@ exports.up = (pgm) => {
     state_info: { type: "json", notNull: true, default: "{}" },
 
     // determines if "FAILURE" or "SUCCESS" is displayed on screen
-    overlay: {
-      type: "jsonb",
-      notNull: true,
-      default: "{}",
-    },
     start_time: {
       type: "timestamptz",
       notNull: true,

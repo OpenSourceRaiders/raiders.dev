@@ -9,7 +9,7 @@ import Backdrop from "@material-ui/core/Backdrop"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useSessionListPolling } from "../hooks/use-session.js"
 
-const gameDefs = {
+export const gameDefs = {
   "All In": {
     description:
       "In All In, all players work towards the completion of a single challenging issue.",
@@ -55,7 +55,7 @@ export const SchedulePage = ({ onNavigate }) => {
         <Table
           show={!infoDialog.open && Boolean(sessions)}
           animate
-          headers={["Starts In", "Date", "Time", "Theme", "Games", ""]}
+          headers={["Starts In", "Date", "Time", "Theme", "Games", "", ""]}
           dataset={(sessions || []).map((session) =>
             [
               <CountTo to={session.start_time} />,
@@ -117,9 +117,9 @@ export const SchedulePage = ({ onNavigate }) => {
                         }
                       )
                     }}
-                    layer="success"
+                    layer="alert"
                   >
-                    Joined ({session.players.length}/{session.players_allowed})
+                    Leave ({session.players.length}/{session.players_allowed})
                   </Button>
                 ) : session.players.length < session.players_allowed ? (
                   <Button
@@ -167,6 +167,18 @@ export const SchedulePage = ({ onNavigate }) => {
                   </Button>
                 )}
               </div>,
+              user && session.players.includes(user.nickname) ? (
+                <div style={{ margin: 8, textAlign: "center" }}>
+                  <Button
+                    onClick={() =>
+                      onNavigate("room", { session_id: session.session_id })
+                    }
+                    layer="success"
+                  >
+                    Enter Room
+                  </Button>
+                </div>
+              ) : null,
             ].map((item, i) => <TableItem key={i}>{item}</TableItem>)
           )}
         />
