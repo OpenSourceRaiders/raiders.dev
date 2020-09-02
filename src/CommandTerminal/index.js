@@ -20,7 +20,9 @@ const TextArea = styled("textarea")({
 })
 
 export const CommandTerminal = ({ onSubmit, commands = [] }) => {
-  commands = [...commands].map((c) => c.command).slice(0, 11)
+  commands = [...commands]
+    .map((c) => ({ ...c.command, issued_by: c.issued_by }))
+    .slice(0, 11)
   commands.reverse()
   const [commandText, setCommandText] = useState("")
   return (
@@ -31,10 +33,13 @@ export const CommandTerminal = ({ onSubmit, commands = [] }) => {
           commands
             .map((cmd) => {
               return (
+                `P${cmd.issued_by}: ` +
                 cmd.type +
                 " " +
                 Object.entries(cmd)
-                  .filter(([k, v]) => k !== "type" && k !== "id")
+                  .filter(
+                    ([k, v]) => k !== "type" && k !== "id" && k !== "issued_by"
+                  )
                   .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
                   .join(" ")
               )

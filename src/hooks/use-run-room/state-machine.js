@@ -106,7 +106,7 @@ export default ({
         dispatch({
           type: "SPOTLIGHT",
           player: nextPlayer,
-          until: timeRemaining - 60,
+          until: timeRemaining - 90,
         })
       }
       return { ...state, timeRemaining }
@@ -115,7 +115,7 @@ export default ({
       return {
         ...state,
         ...loadPlanItem(plan[command.index]),
-        planIndex: plan[command.index],
+        planIndex: command.index,
       }
     }
     case "SPOTLIGHT": {

@@ -9,6 +9,9 @@ import TextInput from "../TextInput"
 import CommandTerminal from "../CommandTerminal"
 import useRunRoom from "../hooks/use-run-room"
 import speech from "../speech"
+import { useAuth0 } from "@auth0/auth0-react"
+import range from "lodash/range"
+import issueCommand from "../utils/issue-command"
 
 const IFrame = styled("iframe")({
   border: "none",
@@ -25,28 +28,36 @@ const toMinSecs = (n) => {
 }
 
 export const InGameRoom = ({ session_id }) => {
-  const [loading, setLoading] = useState(false)
+  let [loading, setLoading] = useState(false)
+  const { user } = useAuth0()
   const [bigCamera, setBigCamera] = useState(false)
   const [timeUntilScreenOnYou, setTimeUntilScreenOnYou] = useState("1:43")
   const [playerNumber, setPlayerNumber] = useState(null)
   const [session, changeSession] = useSessionPolling(session_id)
-  useRunRoom(session)
+  useRunRoom(session, playerNumber === 0)
   const fakeLoad = async () => {
     setLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 500))
     setLoading(false)
   }
+  if (!session) loading = true
+  const sendCommand = (command) =>
+    issueCommand({ command, playerNumber, session_id })
   const [showing, setShowing] = useState([
-    // "playerNumber",
-    "camera",
-    "screen",
-    "status",
-    "stream",
+    "playerNumber",
+    // "camera",
+    // "screen",
+    // "status",
+    // "stream",
   ])
   const playerNumberSelected = async (e) => {
-    const number = parseInt(e.target.innerHTML)
+    const number = parseInt(e.target.innerHTML) - 1
     setPlayerNumber(number)
-    speech.speak({ text: "Welcome... Raider " + number })
+    sendCommand({
+      type: "PLAYER_ACTIVE",
+      player: number,
+    })
+    speech.speak({ text: "Welcome... Raider " + (number + 1) })
     await fakeLoad()
     setShowing(["camera"])
   }
@@ -69,7 +80,7 @@ export const InGameRoom = ({ session_id }) => {
                 </Words>
               )}
               <IFrame
-                src="https://obs.ninja/?room=lamebear_cam&webcam"
+                src={`https://obs.ninja/?room=lamebear_cam&push=lamebear_cam_p${playerNumber}&webcam`}
                 width={!inStream ? 400 : 600}
                 allow="camera;microphone"
                 title="camera"
@@ -101,24 +112,39 @@ export const InGameRoom = ({ session_id }) => {
         </Grid>
         <Grid item xs={!inStream ? 12 : 5}>
           {showing.includes("playerNumber") && (
-            <Project show={!loading} animate header="Select Your Player">
-              {!loading && (
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <Button disabled animate>
-                    1
-                  </Button>
-                  <Button disabled animate>
-                    2
-                  </Button>
-                  <Button onClick={playerNumberSelected} animate>
-                    3
-                  </Button>
-                  <Button animate>4</Button>
-                </div>
-              )}
-            </Project>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ display: "inline-flex" }}>
+                <Project show={!loading} animate header="Select Your Player">
+                  {!loading && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      {range(4).map((n) => (
+                        <Button
+                          key={n}
+                          layer={
+                            (session.state_info?.activePlayers || []).includes(
+                              n
+                            )
+                              ? "alert"
+                              : session.players.indexOf(user.nickname) !== n
+                              ? undefined
+                              : "success"
+                          }
+                          onClick={playerNumberSelected}
+                          animate
+                        >
+                          {n + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </Project>
+              </div>
+            </div>
           )}
           <div style={{ marginTop: 32 }} />
           <div style={{ textAlign: "center" }}>
@@ -197,21 +223,10 @@ export const InGameRoom = ({ session_id }) => {
                       <Spacing>
                         <Button
                           onClick={() => {
-                            const id = Math.random().toString(36).slice(-8)
-                            fetch(`/api/command`, {
-                              method: "POST",
-                              body: JSON.stringify({
-                                command: {
-                                  type: "SPOTLIGHT",
-                                  player: playerNumber || 0,
-                                  until:
-                                    session?.state_info?.timeRemaining - 60,
-                                  id,
-                                },
-                                session_id,
-                                player_number: playerNumber || 0,
-                              }),
-                              headers: { "Content-Type": "application/json" },
+                            sendCommand({
+                              type: "SPOTLIGHT",
+                              player: playerNumber || 0,
+                              until: session?.state_info?.timeRemaining - 60,
                             })
                           }}
                         >
@@ -224,16 +239,7 @@ export const InGameRoom = ({ session_id }) => {
                       <CommandTerminal
                         commands={session ? session.recentCommands : []}
                         onSubmit={(cmd) => {
-                          const id = Math.random().toString(36).slice(-8)
-                          fetch(`/api/command`, {
-                            method: "POST",
-                            body: JSON.stringify({
-                              command: { ...cmd, id },
-                              session_id,
-                              player_number: playerNumber || 0,
-                            }),
-                            headers: { "Content-Type": "application/json" },
-                          })
+                          sendCommand(cmd)
                         }}
                       />
                     </Grid>
@@ -255,10 +261,25 @@ export const InGameRoom = ({ session_id }) => {
                     show={!loading}
                   >
                     <Spacing>
-                      <Button>Kick 1</Button>
-                      <Button>Kick 2</Button>
-                      <Button>Kick 3</Button>
-                      <Button>Kick 4</Button>
+                      {range(4).map((n) => (
+                        <Button
+                          key={n}
+                          onClick={() => {
+                            sendCommand({
+                              type: "KICK_PLAYER",
+                              player: n,
+                            })
+                          }}
+                          disabled={
+                            !(session.state_info?.activePlayers || []).includes(
+                              n
+                            )
+                          }
+                          layer="alert"
+                        >
+                          Kick {n + 1}
+                        </Button>
+                      ))}
                     </Spacing>
                   </Project>
                 )}

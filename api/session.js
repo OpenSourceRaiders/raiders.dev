@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
                     FROM session_command
                     WHERE session_command.session_id=session.session_id
                     ORDER BY session_command.created_at DESC
-                    LIMIT 30
+                    LIMIT 12
                   ) jsonb_commands
                 ),
                 '[]'::jsonb

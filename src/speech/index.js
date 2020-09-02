@@ -6,7 +6,7 @@ speech.init({
   lang: "en-US",
   rate: 1,
   pitch: 0.8,
-  voice: "Google UK English Male",
+  voice: "Google UK English Female",
   splitSentences: true,
   listeners: {
     onvoiceschanged: (voices) => {

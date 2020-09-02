@@ -14,7 +14,7 @@ function executeSpeech(command) {
   }
 }
 
-export default (session, host) => {
+export default (session, hosting) => {
   const alreadyRunCommands = useRef(new Set())
   const commandsToRun = useRef([])
   const listenStartTime = useRef(Date.now())
@@ -42,6 +42,7 @@ export default (session, host) => {
 
   useEffect(() => {
     if (!session_id) return
+    if (!hosting) return
     gameState.current = session.state_info
     let t = 0
     setInterval(() => {
@@ -93,5 +94,5 @@ export default (session, host) => {
         })
       }
     }, 1000)
-  }, [session_id])
+  }, [session_id, hosting])
 }
