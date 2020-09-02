@@ -79,12 +79,14 @@ export default ({
     case "TIME": {
       const { timeRemaining } = command
       if (timeRemaining <= 0) {
-        return {
-          ...state,
-          ...loadPlanItem(plan[state.planIndex + 1]),
-          planIndex: state.planIndex + 1,
+        if (state.inGame) {
+          dispatch({
+            type: "SAY",
+            text: "OUT OF TIME. FAILURE FAILURE FAILURE FAILURE",
+          })
         }
-      } else if (timeRemaining === 10 && state.timeRemaining) {
+        dispatch({ type: "GO_TO_PLAN", index: state.planIndex + 1 })
+      } else if (timeRemaining === 10 && state.timeRemaining && state.inGame) {
         dispatch({ type: "COUNTDOWN", from: 10 })
       } else if (timeRemaining === 60 && state.inGame) {
         dispatch({ type: "SAY", text: "One Minute Remaining" })
@@ -111,12 +113,27 @@ export default ({
       }
       return { ...state, timeRemaining }
     }
+    case "WIN": {
+      dispatch({ type: "SAY", text: "SUCCESS... YOU ARE WINNERS" })
+      return { ...state, inGame: true }
+    }
+    case "FORFEIT": {
+      dispatch({ type: "SAY", text: "FORFEIT. LOSER. YOU LOSE." })
+      return { ...state, timeRemaining: 30, inGame: false }
+    }
     case "GO_TO_PLAN": {
-      return {
+      const newState = {
         ...state,
         ...loadPlanItem(plan[command.index]),
         planIndex: command.index,
       }
+      if (newState.inGame) {
+        dispatch({
+          type: "SAY",
+          text: "Starting Game: " + newState.currentTitle,
+        })
+      }
+      return newState
     }
     case "SPOTLIGHT": {
       return {

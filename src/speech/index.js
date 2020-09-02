@@ -8,11 +8,6 @@ speech.init({
   pitch: 0.8,
   voice: "Google UK English Female",
   splitSentences: true,
-  listeners: {
-    onvoiceschanged: (voices) => {
-      console.log("Event voiceschanged", voices)
-    },
-  },
 })
 
 export default speech

@@ -174,7 +174,7 @@ export const InGameRoom = ({ session_id }) => {
                   : null}
                 <div style={{ marginTop: 16 }}>
                   <IFrame
-                    src="https://obs.ninja/?room=lamebear_screen&view&screenshare&noaudio&novideo"
+                    src={`https://obs.ninja/?room=lamebear_screen&push=lamebear_screen_p${playerNumber}&view&screenshare&noaudio&novideo`}
                     width="300"
                     className={loading ? "loading" : ""}
                     height={240}
