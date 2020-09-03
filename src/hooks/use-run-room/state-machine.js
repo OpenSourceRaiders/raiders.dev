@@ -86,8 +86,8 @@ export default ({
           })
         }
         dispatch({ type: "GO_TO_PLAN", index: state.planIndex + 1 })
-      } else if (timeRemaining === 10 && state.timeRemaining && state.inGame) {
-        dispatch({ type: "COUNTDOWN", from: 10 })
+      } else if (timeRemaining === 30 && state.timeRemaining && state.inGame) {
+        dispatch({ type: "COUNTDOWN", from: 10, exp: 30 })
       } else if (timeRemaining === 60 && state.inGame) {
         dispatch({ type: "SAY", text: "One Minute Remaining" })
       } else if (timeRemaining === 120 && state.inGame) {

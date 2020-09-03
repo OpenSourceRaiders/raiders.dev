@@ -6,10 +6,15 @@ function executeSpeech(command) {
   if (command.type === "SAY") {
     speech.speak({ text: command.text })
   } else if (command.type === "COUNTDOWN") {
-    for (let i = Math.min(10, command.from); i > 0; i--) {
+    const from = Math.min(10, command.from)
+    for (let i = from; i > 0; i--) {
+      const k = command.from - i // (i=10, k=0),  (i=9, k=1)...
+      // Count down slower towards the end
+      const delay =
+        k * 1000 + (k / from) ** 2 * (command.exp ? command.exp * 1000 : 0)
       setTimeout(() => {
         speech.speak({ text: i.toString() })
-      }, 1000 + (command.from - i) * 1000)
+      }, delay)
     }
   }
 }
