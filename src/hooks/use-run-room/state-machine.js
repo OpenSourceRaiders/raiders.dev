@@ -72,7 +72,7 @@ export default ({
   plan: Array<{| name: string, duration: number |} | {||}>,
   dispatch: (Command) => null,
 }) => {
-  if (!state) {
+  if (!state || !state.spotlight) {
     state = initialState
   }
   switch (command.type) {
@@ -115,7 +115,7 @@ export default ({
     }
     case "WIN": {
       dispatch({ type: "SAY", text: "SUCCESS... YOU ARE WINNERS" })
-      return { ...state, inGame: true }
+      return { ...state, inGame: false, timeRemaining: 120 }
     }
     case "FORFEIT": {
       dispatch({ type: "SAY", text: "FORFEIT. LOSER. YOU LOSE." })

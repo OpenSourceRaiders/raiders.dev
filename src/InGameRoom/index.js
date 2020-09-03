@@ -80,7 +80,7 @@ export const InGameRoom = ({ session_id }) => {
                 </Words>
               )}
               <IFrame
-                src={`https://obs.ninja/?room=lamebear_cam&push=lamebear_cam_p${playerNumber}&webcam`}
+                src={`https://obs.ninja/?room=lamebearcam&push=lamebearcamp${playerNumber}&webcam`}
                 width={!inStream ? 400 : 600}
                 allow="camera;microphone"
                 title="camera"
@@ -174,7 +174,7 @@ export const InGameRoom = ({ session_id }) => {
                   : null}
                 <div style={{ marginTop: 16 }}>
                   <IFrame
-                    src={`https://obs.ninja/?room=lamebear_screen&push=lamebear_screen_p${playerNumber}&view&screenshare&noaudio&novideo`}
+                    src={`https://obs.ninja/?room=lamebearscreen&push=lamebearscreenp${playerNumber}&view&screenshare&noaudio&novideo`}
                     width="300"
                     className={loading ? "loading" : ""}
                     height={240}
